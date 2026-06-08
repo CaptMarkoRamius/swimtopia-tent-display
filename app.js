@@ -190,9 +190,11 @@ export function backToMeets() { stopTimers(); releaseWakeLock(); show('view-meet
 
 export async function refreshData() {
   try {
-    const meetResp = await fetchMeetDetails(S.meetId);
-    S.nirvanaId = meetResp.data.relationships?.nirvanaMeet?.data?.id ?? null;
-    $('dh-meet').textContent = meetResp.data.attributes?.name || S.meetId;
+    if (!S.nirvanaId) {
+      const meetResp = await fetchMeetDetails(S.meetId);
+      S.nirvanaId = meetResp.data.relationships?.nirvanaMeet?.data?.id ?? null;
+      $('dh-meet').textContent = meetResp.data.attributes?.name || S.meetId;
+    }
 
     if (!S.nirvanaId) { await _loadSwimEntries(); return; }
 
