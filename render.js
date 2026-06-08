@@ -186,7 +186,7 @@ function _renderIndividualResults(entries) {
     const timeCls  = e.isDq ? 'dq' : e.isScratched ? 'scr' : '';
     const delta    = fmtDelta(e.offTime, e.seedTime);
     const heatPlSt = e.heatNum != null
-      ? `Heat ${e.heatNum}${e.heatPlace && ORDINAL[e.heatPlace] ? ` · ${ORDINAL[e.heatPlace]}` : ''}`
+      ? `Heat ${e.heatNum}${e.heatPlace && ORDINAL[e.heatPlace] ? ` · ${ORDINAL[e.heatPlace]} in heat` : ''}`
       : '';
     html += `<div class="prev-swimmer">
       <div class="${badgeCls}">${placeStr}</div>

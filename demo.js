@@ -47,9 +47,9 @@ export function loadDemoData() {
       name: 'Ethan Miller', lastName: 'Miller', age: 10, gender: 'M',
       events: [
         { eventId: 'e14', name: '50 Free',  number: '14', schedIdx: 14001, status: 'done',
-          heatNum: 2, laneNum: 5, offTime: 3287, seedTime: 3350, place: 1, heatPlace: 1, qualifying: ['INV'], isDq: false, isScratched: false },
+          heatNum: 2, laneNum: 5, offTime: 3198, seedTime: 3250, place: 1, heatPlace: 1, qualifying: ['INV'], isDq: false, isScratched: false },
         { eventId: 'e21', name: '100 Back', number: '21', schedIdx: 21001, status: 'done',
-          heatNum: 1, laneNum: 4, offTime: 7954, seedTime: 8100, place: 3, heatPlace: 2, qualifying: [], isDq: false, isScratched: false },
+          heatNum: 1, laneNum: 4, offTime: 7954, seedTime: 8100, place: 3, heatPlace: 2, qualifying: ['INV'], isDq: false, isScratched: false },
         { eventId: 'e73', name: '200 Medley Relay', number: '73', schedIdx: 73001, status: 'done',
           heatNum: 2, laneNum: 3, offTime: 11903, place: 1, isDq: false, isScratched: false, isRelay: true,
           relayTeam: 'A', legPosition: 4, legStroke: 1, qualifying: [] },
@@ -70,7 +70,7 @@ export function loadDemoData() {
       name: 'Noah Garcia', lastName: 'Garcia', age: 9, gender: 'M',
       events: [
         { eventId: 'e14', name: '50 Free',  number: '14', schedIdx: 14001, status: 'done',
-          heatNum: 2, laneNum: 3, offTime: 3412, seedTime: 3380, place: 4, heatPlace: 3, qualifying: [], isDq: false, isScratched: false },
+          heatNum: 2, laneNum: 3, offTime: 3412, seedTime: 3380, place: 4, heatPlace: 3, qualifying: ['INV'], isDq: false, isScratched: false },
         { eventId: 'e21', name: '100 Back', number: '21', schedIdx: 21001, status: 'done',
           heatNum: 1, laneNum: 6, offTime: 8560, seedTime: 8400, place: 6, heatPlace: 4, qualifying: [], isDq: false, isScratched: false },
         { eventId: 'e73', name: '200 Medley Relay', number: '73', schedIdx: 73001, status: 'done',
@@ -93,7 +93,7 @@ export function loadDemoData() {
       name: 'Jackson Lee', lastName: 'Lee', age: 10, gender: 'M',
       events: [
         { eventId: 'e14', name: '50 Free',  number: '14', schedIdx: 14001, status: 'done',
-          heatNum: 2, laneNum: 7, offTime: 3501, seedTime: 3490, place: 5, heatPlace: 5, qualifying: [], isDq: false, isScratched: false },
+          heatNum: 2, laneNum: 7, offTime: 3501, seedTime: 3490, place: 5, heatPlace: 4, qualifying: [], isDq: false, isScratched: false },
         { eventId: 'e73', name: '200 Medley Relay', number: '73', schedIdx: 73001, status: 'done',
           heatNum: 2, laneNum: 3, offTime: 11903, place: 1, isDq: false, isScratched: false, isRelay: true,
           relayTeam: 'A', legPosition: 3, legStroke: 4, qualifying: [] },
@@ -101,7 +101,7 @@ export function loadDemoData() {
           heatNum: 2, laneNum: 5, offTime: 11245, place: 2, isDq: false, isScratched: false, isRelay: true,
           relayTeam: 'A', legPosition: 3, legStroke: 1, qualifying: [] },
         { eventId: 'e77', name: '50 Back', number: '77', schedIdx: 77001, status: 'done',
-          heatNum: 1, laneNum: 2, offTime: 4812, seedTime: 4750, place: 4, heatPlace: 2, qualifying: [], isDq: false, isScratched: false },
+          heatNum: 1, laneNum: 2, offTime: 4812, seedTime: 4750, place: 8, heatPlace: 2, qualifying: [], isDq: false, isScratched: false },
         { eventId: 'e80', name: '200 Medley Relay', number: '80', schedIdx: 80001, status: 'upcoming',
           heatNum: 2, laneNum: 3, etaEpoch: eta(25 * 60), etaDisplay: etaFmt(25 * 60),
           isRelay: true, relayTeam: 'A', legPosition: 3, legStroke: 4 },
@@ -119,7 +119,7 @@ export function loadDemoData() {
           heatNum: 2, laneNum: 3, offTime: 11903, place: 1, isDq: false, isScratched: false, isRelay: true,
           relayTeam: 'A', legPosition: 2, legStroke: 3, qualifying: [] },
         { eventId: 'e77', name: '50 Back', number: '77', schedIdx: 77001, status: 'done',
-          heatNum: 1, laneNum: 6, offTime: 5104, seedTime: 5210, place: 8, heatPlace: 4, qualifying: [], isDq: false, isScratched: false },
+          heatNum: 1, laneNum: 6, offTime: 5104, seedTime: 5210, place: 11, heatPlace: 4, qualifying: [], isDq: false, isScratched: false },
         { eventId: 'e80', name: '200 Medley Relay', number: '80', schedIdx: 80001, status: 'upcoming',
           heatNum: 2, laneNum: 3, etaEpoch: eta(25 * 60), etaDisplay: etaFmt(25 * 60),
           isRelay: true, relayTeam: 'A', legPosition: 2, legStroke: 3 },
@@ -129,7 +129,7 @@ export function loadDemoData() {
       name: 'Oliver Chen', lastName: 'Chen', age: 10, gender: 'M',
       events: [
         { eventId: 'e14', name: '50 Free',  number: '14', schedIdx: 14001, status: 'done',
-          heatNum: 1, laneNum: 4, offTime: 3198, seedTime: 3250, place: 2, heatPlace: 2, qualifying: ['INV'], isDq: false, isScratched: false },
+          heatNum: 1, laneNum: 4, offTime: 3287, seedTime: 3350, place: 2, heatPlace: 1, qualifying: ['INV'], isDq: false, isScratched: false },
         { eventId: 'e21', name: '100 Back', number: '21', schedIdx: 21001, status: 'done',
           heatNum: 1, laneNum: 2, offTime: 7801, seedTime: 8000, place: 1, heatPlace: 1, qualifying: ['INV'], isDq: false, isScratched: false },
         { eventId: 'e74', name: '200 Free Relay', number: '74', schedIdx: 74001, status: 'done',
@@ -155,7 +155,7 @@ export function startDemoAnimation() {
         if (sw.name === 'Ethan Miller') {
           ev.offTime = 4089; ev.place = 2; ev.heatPlace = 1; ev.qualifying = ['INV']; ev.isDq = false;
         } else if (sw.name === 'Noah Garcia') {
-          ev.offTime = 4312; ev.place = 5; ev.heatPlace = 2; ev.qualifying = []; ev.isDq = false;
+          ev.offTime = 4312; ev.place = 5; ev.heatPlace = 2; ev.qualifying = ['INV']; ev.isDq = false;
         }
       }
     }
