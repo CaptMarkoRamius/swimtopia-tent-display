@@ -374,6 +374,37 @@ export function releaseWakeLock() {
   if (S.wakeLock) { S.wakeLock.release().catch(() => {}); S.wakeLock = null; }
 }
 
+// ── Font size ─────────────────────────────────────────────────────────────────
+
+let _fontPct = parseInt(localStorage.getItem('st_font') || '100');
+
+function _applyFontSize() {
+  document.documentElement.style.fontSize = _fontPct + '%';
+}
+
+export function adjustFontSize(dir) {
+  _fontPct = Math.max(70, Math.min(150, _fontPct + dir * 10));
+  localStorage.setItem('st_font', _fontPct);
+  _applyFontSize();
+}
+
+_applyFontSize();
+
+// ── Fullscreen ────────────────────────────────────────────────────────────────
+
+export function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen().catch(() => {});
+  }
+}
+
+document.addEventListener('fullscreenchange', () => {
+  const btn = $('fullscreen-btn');
+  if (btn) btn.textContent = document.fullscreenElement ? '⊠' : '⛶';
+});
+
 // ── Theme ─────────────────────────────────────────────────────────────────────
 
 function _applyTheme(day) {
@@ -392,10 +423,12 @@ _applyTheme(localStorage.getItem('st_theme') === 'day');
 
 // ── Expose handlers for inline onclick attributes ────────────────────────────
 
-window.doLogout    = doLogout;
-window.toggleTheme = toggleTheme;
-window.selectMeet  = selectMeet;
-window.backToMeets = backToMeets;
+window.doLogout       = doLogout;
+window.toggleTheme    = toggleTheme;
+window.selectMeet     = selectMeet;
+window.backToMeets    = backToMeets;
+window.adjustFontSize = adjustFontSize;
+window.toggleFullscreen = toggleFullscreen;
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 

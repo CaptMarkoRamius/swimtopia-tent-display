@@ -2,7 +2,7 @@
 
 A live tent-parent display for swim meets. Shows your age group's upcoming events with heat/lane assignments and live countdowns to lineup time, then moves completed heats to a results column as they finish.
 
-**[Try the live demo →](index.html?demo)**
+**[Try the live demo →](https://theotherjason.github.io/swimtopia-tent-display/?demo)**
 
 ---
 

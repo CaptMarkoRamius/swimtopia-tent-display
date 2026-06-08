@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tent Display">
+<meta name="theme-color" content="#0f172a">
+<link rel="manifest" href="manifest.json">
 <title>SwimTopia Tent Display</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -77,9 +83,13 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 .privacy-icon:hover::after { content: attr(data-tip); position: absolute; bottom: calc(100% + 7px); left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 0.78rem; color: var(--text); white-space: normal; width: 240px; line-height: 1.45; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,.4); font-weight: 400; pointer-events: none; }
 
 /* ── Meet Picker ── */
-#view-meets { padding: 20px; max-width: 780px; margin: 0 auto; }
-.meets-header h1 { font-size: 1.4rem; margin-bottom: 18px; }
-.filter-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; margin-bottom: 24px; }
+#view-meets { padding: 0; max-width: 780px; margin: 0 auto; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+.meets-header { flex-shrink: 0; padding: 16px 20px 12px; border-bottom: 1px solid var(--border); background: var(--bg); }
+.meets-topbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.meets-title { font-size: 1.4rem; font-weight: 700; }
+.meets-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+#meets-list { flex: 1; overflow-y: auto; padding: 12px 20px 20px; }
+.filter-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; margin-bottom: 0; }
 .filter-row .field { margin-bottom: 0; }
 .meet-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 10px; cursor: pointer; transition: border-color .15s, background .15s; }
 .meet-card:hover { border-color: var(--blue); background: var(--surface-hi); }
@@ -106,8 +116,8 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 .bt-info { min-width: 0; flex: 1; }
 .bt-tag  { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 2px; }
 .bt-tag.live { color: var(--blue); }
-.bt-event { font-size: 1rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#bt-clock { font-size: 2.2rem; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; flex-shrink: 0; color: var(--text); }
+.bt-event { font-size: 1.25rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#bt-clock { font-size: 2.5rem; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; flex-shrink: 0; color: var(--text); }
 
 /* Lineup banner */
 #banner-lineup { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 9px 18px; border-bottom: 1px solid transparent; flex-shrink: 0; transition: background .3s, border-color .3s; }
@@ -119,9 +129,9 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 .bl-tag.warn   { color: var(--orange); }
 .bl-tag.lineup { color: var(--red); }
 .bl-tag.normal { color: var(--muted); }
-.bl-event { font-size: 0.9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bl-event { font-size: 1.1rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bl-time  { font-size: 0.78rem; color: var(--muted); margin-top: 1px; }
-#bl-countdown { font-size: 1.8rem; font-weight: 700; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+#bl-countdown { font-size: 2.1rem; font-weight: 700; font-variant-numeric: tabular-nums; flex-shrink: 0; }
 #bl-countdown.warn   { color: var(--orange); }
 #bl-countdown.lineup { color: var(--red); }
 #bl-countdown.normal { color: var(--muted); }
@@ -155,6 +165,12 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 .ps-heat { font-size: 0.72rem; color: var(--muted); }
 .ps-qual { font-size: 0.7rem; font-weight: 700; color: var(--green); border: 1px solid var(--green); border-radius: 3px; padding: 0 4px; }
 .scoring-note { font-size: 0.75rem; color: var(--muted); margin-top: 6px; font-style: italic; }
+.ps-time.scr { color: var(--muted); }
+
+/* Font size controls */
+.font-btns { display: inline-flex; align-items: center; gap: 1px; }
+.btn-font { background: none; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); cursor: pointer; font-size: 0.78rem; line-height: 1; padding: 3px 6px; }
+.btn-font:hover { color: var(--text); border-color: var(--muted); }
 
 /* Next events */
 .next-event-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: border-color .2s; }
@@ -182,11 +198,12 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 
 /* Responsive */
 @media (max-width: 680px) {
-  #split-panel { flex-direction: column; overflow-y: auto; }
-  #panel-prev { flex: none; border-right: none; border-top: 1px solid var(--border); order: 2; overflow-y: visible; }
-  #panel-next { flex: none; order: 1; overflow-y: visible; }
-  #bt-clock { font-size: 1.6rem; }
-  #bl-countdown { font-size: 1.4rem; }
+  #split-panel { flex-direction: column; overflow-y: auto; overflow-x: hidden; }
+  #panel-prev { flex: none; border-right: none; border-top: 1px solid var(--border); order: 2; overflow: visible; }
+  #panel-next { flex: none; order: 1; overflow: visible; }
+  #bt-clock { font-size: 1.8rem; }
+  #bl-countdown { font-size: 1.6rem; }
+  .relay-leg-stroke { min-width: 44px; }
 }
 @media (orientation: landscape) and (max-height: 480px) {
   #disp-header { padding: 5px 12px; }
@@ -218,13 +235,28 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
       <button class="btn" id="login-btn" type="submit">Sign In</button>
     </form>
     <div id="login-error" class="error-msg"></div>
+    <div style="text-align:center;margin-top:20px;font-size:0.85rem;color:var(--muted)">
+      No account? <a href="https://theotherjason.github.io/swimtopia-tent-display/?demo"
+        style="color:var(--blue);text-decoration:none;">Try the live demo →</a>
+    </div>
   </div>
 </div>
 
 <!-- ── Meet Picker ────────────────────────────────────── -->
 <div id="view-meets" class="view hidden">
   <div class="meets-header">
-    <h1>Select Meet</h1>
+    <div class="meets-topbar">
+      <h2 class="meets-title">Select Meet</h2>
+      <div class="meets-actions">
+        <button class="btn btn-ghost btn-sm" onclick="doLogout()">Sign Out</button>
+        <button class="btn btn-ghost btn-sm" id="theme-btn-meets" onclick="toggleTheme()">☀️ Day</button>
+        <button class="btn btn-sm" id="go-btn" disabled
+          onclick="selectMeet(this.dataset.meetId, this.dataset.meetName)"
+          style="width:auto;padding:9px 20px;font-size:0.95rem;">
+          Launch Display ▶
+        </button>
+      </div>
+    </div>
     <div class="filter-row">
       <div class="field">
         <label>Age Group</label>
@@ -259,17 +291,6 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
     </div>
   </div>
   <div id="meets-list"><div class="loading">Loading meets…</div></div>
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;padding-bottom:32px;gap:12px;">
-    <div style="display:flex;gap:8px;">
-      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Sign Out</button>
-      <button class="btn btn-ghost btn-sm" id="theme-btn-meets" onclick="toggleTheme()">☀️ Day</button>
-    </div>
-    <button class="btn btn-sm" id="go-btn" disabled
-      onclick="selectMeet(this.dataset.meetId, this.dataset.meetName)"
-      style="width:auto;padding:10px 28px;font-size:1rem;">
-      Launch Display ▶
-    </button>
-  </div>
 </div>
 
 <!-- ── Tent Display ───────────────────────────────────── -->
@@ -280,7 +301,12 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
       <div class="dh-sub"  id="dh-sub"></div>
     </div>
     <div class="dh-right">
+      <span class="font-btns">
+        <button class="btn-font" onclick="adjustFontSize(-1)" title="Smaller text">A−</button>
+        <button class="btn-font" onclick="adjustFontSize(1)" title="Larger text">A+</button>
+      </span>
       <button class="btn btn-ghost btn-sm" id="theme-btn-display" onclick="toggleTheme()">☀️ Day</button>
+      <button class="btn btn-ghost btn-sm" id="fullscreen-btn" onclick="toggleFullscreen()" title="Toggle fullscreen">⛶</button>
       <button class="btn btn-ghost btn-sm" id="btn-back" onclick="backToMeets()">◀ Back</button>
     </div>
   </header>

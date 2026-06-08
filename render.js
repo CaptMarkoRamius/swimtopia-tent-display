@@ -30,10 +30,13 @@ export function renderTopBanner() {
   if (t?.isLive) {
     const stroke = STROKE[t.currentEventStrokeCode] ?? '';
     const gender = t.currentEventGender === 'F' ? 'Girls' : t.currentEventGender === 'M' ? 'Boys' : '';
+    const agePart = (t.currentEventMinAge != null && t.currentEventMaxAge != null)
+      ? `${t.currentEventMinAge}-${t.currentEventMaxAge}` : '';
     const parts = [
       t.currentEventNumberDigit ? `Event ${t.currentEventNumberDigit}` : null,
       t.currentHeatNumber ? `Heat ${t.currentHeatNumber}` : null,
-      t.currentEventDistance ? `${t.currentEventDistance} ${stroke} ${gender}`.trim() : null,
+      t.currentEventDistance ? `${t.currentEventDistance} ${stroke}`.trim() : null,
+      (agePart || gender) ? `${agePart} ${gender}`.trim() : null,
     ].filter(Boolean);
     $('bt-tag').textContent   = 'NOW IN POOL';
     $('bt-tag').className     = 'bt-tag live';
@@ -157,16 +160,18 @@ function _renderRelayResultBlock(entries) {
 function _renderIndividualResults(entries) {
   let html = '';
   const anyHasTime = entries.some(e => e.offTime != null);
-  const hasPartial = anyHasTime && entries.some(e => e.offTime == null && !e.isDq);
+  const hasPartial = anyHasTime && entries.some(e => e.offTime == null && !e.isDq && !e.isScratched);
 
   for (const e of entries) {
     const placeN   = e.place ?? 0;
     const placeStr = placeN && ORDINAL[placeN] ? ORDINAL[placeN] : '—';
     const badgeCls = placeN === 1 ? 'ps-badge p1' : placeN === 2 ? 'ps-badge p2' : placeN === 3 ? 'ps-badge p3' : 'ps-badge';
-    const timeStr  = e.isDq ? 'DQ' : (e.offTime != null ? fmtTime(e.offTime) : '—');
-    const timeCls  = e.isDq ? 'dq' : '';
+    const timeStr  = e.isDq ? 'DQ' : e.isScratched ? 'SCR' : (e.offTime != null ? fmtTime(e.offTime) : '—');
+    const timeCls  = e.isDq ? 'dq' : e.isScratched ? 'scr' : '';
     const delta    = fmtDelta(e.offTime, e.seedTime);
-    const heatPlSt = e.heatPlace && ORDINAL[e.heatPlace] ? `H:${ORDINAL[e.heatPlace]}` : '';
+    const heatPlSt = e.heatNum
+      ? `Heat ${e.heatNum}${e.heatPlace && ORDINAL[e.heatPlace] ? ` · ${ORDINAL[e.heatPlace]}` : ''}`
+      : '';
     html += `<div class="prev-swimmer">
       <div class="${badgeCls}">${placeStr}</div>
       <div class="ps-right">
@@ -198,7 +203,7 @@ export function renderNextPanel(now) {
     return;
   }
 
-  panel.innerHTML = '';
+  panel.innerHTML = '<div class="prev-event-title">Upcoming Events</div>';
   for (const g of groups) {
     const lineupAt     = g.etaEpoch ? g.etaEpoch - S.lineupMin * 60 : null;
     const secsToLineup = lineupAt ? lineupAt - now : null;

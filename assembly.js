@@ -103,13 +103,14 @@ export function assembleSwimmers(
         const offTime = ra.officialTimeInt ?? null;
         const status  = _heatStatus(ha, offTime, ra);
 
+        const isScratched = ha.status === 'done' && offTime == null && !(ra.isDq ?? false) && ra.invalidCode == null && Object.keys(ra).length === 0;
         const evt = {
           eventId: eid,   name: evd.name ?? 'Event', number: evd.number ?? '',
           heatNum: ha.number, laneNum: ea.laneNumber, status,
           schedIdx: ha.scheduleIndex ?? 0, etaEpoch, etaDisplay,
           offTime, seedTime: ea.seedTimeInt ?? null,
           place: ra.overallPlace ?? null, heatPlace: ra.heatPlace ?? null,
-          isDq: ra.isDq ?? false, isInvalid: ra.invalidCode != null,
+          isDq: ra.isDq ?? false, isInvalid: ra.invalidCode != null, isScratched,
           qualifying: checkQual(offTime, ath.gender, ath.competitionAge, evd.distance, evd.strokeCode, quals),
           isRelay: false,
         };
