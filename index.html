@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SwimTopia Tent Display</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:           #0f172a;
+  --surface:      #1e293b;
+  --surface-hi:   #253349;
+  --border:       #334155;
+  --divider:      rgba(51,65,85,.5);
+  --text:         #f1f5f9;
+  --muted:        #94a3b8;
+  --green:        #22c55e;
+  --yellow:       #eab308;
+  --red:          #ef4444;
+  --blue:         #38bdf8;
+  --orange:       #fb923c;
+  --radius:       10px;
+  --live-bg:      rgba(56,189,248,.1);
+  --live-bd:      rgba(56,189,248,.3);
+  --warn-bg:      rgba(251,146,60,.12);
+  --warn-bd:      rgba(251,146,60,.35);
+  --lineup-bg:    rgba(239,68,68,.13);
+  --lineup-bd:    rgba(239,68,68,.35);
+}
+
+/* ── Day mode (high contrast for outdoor use) ── */
+.day {
+  --bg:           #ffffff;
+  --surface:      #f1f5f9;
+  --surface-hi:   #e2e8f0;
+  --border:       #64748b;
+  --divider:      rgba(71,85,105,.4);
+  --text:         #0f172a;
+  --muted:        #334155;
+  --green:        #15803d;
+  --yellow:       #92400e;
+  --red:          #991b1b;
+  --blue:         #0369a1;
+  --orange:       #9a3412;
+  --live-bg:      rgba(3,105,161,.1);
+  --live-bd:      rgba(3,105,161,.4);
+  --warn-bg:      rgba(154,52,18,.1);
+  --warn-bd:      rgba(154,52,18,.4);
+  --lineup-bg:    rgba(153,27,27,.1);
+  --lineup-bd:    rgba(153,27,27,.4);
+}
+
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, sans-serif; overflow-x: hidden; }
+.view { min-height: 100vh; }
+.hidden { display: none !important; }
+
+/* ── Shared ── */
+.field { margin-bottom: 16px; }
+.field label { display: block; font-size: 0.78rem; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.05em; }
+.field input, .field select { width: 100%; padding: 10px 13px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 1rem; }
+.field input:focus, .field select:focus { outline: none; border-color: var(--blue); }
+.btn { display: block; width: 100%; padding: 12px; background: var(--blue); color: #0f172a; border: none; border-radius: 6px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 8px; }
+.btn:hover { opacity: 0.88; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); font-weight: 400; }
+.btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+.btn-sm { display: inline-block; width: auto; padding: 6px 13px; font-size: 0.82rem; font-weight: 500; margin-top: 0; }
+.error-msg { color: var(--red); font-size: 0.88rem; margin-top: 12px; min-height: 1.2em; }
+
+/* ── Login ── */
+#view-login { display: flex; align-items: center; justify-content: center; padding: 24px; }
+.login-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 40px 36px; width: 100%; max-width: 400px; }
+.login-card h1 { font-size: 1.6rem; margin-bottom: 4px; }
+.login-card .subtitle { color: var(--muted); font-size: 0.88rem; margin-bottom: 28px; display: flex; align-items: center; gap: 6px; }
+.privacy-icon { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--muted); color: var(--muted); font-size: 0.68rem; font-weight: 700; cursor: default; flex-shrink: 0; position: relative; }
+.privacy-icon:hover::after { content: attr(data-tip); position: absolute; bottom: calc(100% + 7px); left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 0.78rem; color: var(--text); white-space: normal; width: 240px; line-height: 1.45; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,.4); font-weight: 400; pointer-events: none; }
+
+/* ── Meet Picker ── */
+#view-meets { padding: 20px; max-width: 780px; margin: 0 auto; }
+.meets-header h1 { font-size: 1.4rem; margin-bottom: 18px; }
+.filter-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.filter-row .field { margin-bottom: 0; }
+.meet-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 10px; cursor: pointer; transition: border-color .15s, background .15s; }
+.meet-card:hover { border-color: var(--blue); background: var(--surface-hi); }
+.meet-card-name { font-size: 1.05rem; font-weight: 600; margin-bottom: 6px; }
+.meet-card-meta { color: var(--muted); font-size: 0.82rem; display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+.stage-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+.stage-upcoming { background: rgba(234,179,8,.15);  color: var(--yellow); }
+.stage-past     { background: rgba(148,163,184,.1); color: var(--muted); }
+.loading { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 0.95rem; }
+
+/* ── Display view ── */
+#view-display { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+/* Header */
+#disp-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 8px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-shrink: 0; }
+.dh-left { min-width: 0; flex: 1; }
+.dh-meet { font-size: 1.25rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dh-sub  { font-size: 1rem; color: var(--muted); font-weight: 500; margin-top: 1px; }
+.dh-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+/* Top banner */
+#banner-top { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 10px 18px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+#banner-top.is-live { background: var(--live-bg); border-color: var(--live-bd); }
+.bt-info { min-width: 0; flex: 1; }
+.bt-tag  { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 2px; }
+.bt-tag.live { color: var(--blue); }
+.bt-event { font-size: 1rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#bt-clock { font-size: 2.2rem; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; flex-shrink: 0; color: var(--text); }
+
+/* Lineup banner */
+#banner-lineup { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 9px 18px; border-bottom: 1px solid transparent; flex-shrink: 0; transition: background .3s, border-color .3s; }
+#banner-lineup.warn    { background: var(--warn-bg);   border-color: var(--warn-bd); }
+#banner-lineup.lineup  { background: var(--lineup-bg); border-color: var(--lineup-bd); }
+#banner-lineup.normal  { background: var(--surface);   border-color: var(--border); }
+.bl-left  { min-width: 0; flex: 1; }
+.bl-tag   { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+.bl-tag.warn   { color: var(--orange); }
+.bl-tag.lineup { color: var(--red); }
+.bl-tag.normal { color: var(--muted); }
+.bl-event { font-size: 0.9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bl-time  { font-size: 0.78rem; color: var(--muted); margin-top: 1px; }
+#bl-countdown { font-size: 1.8rem; font-weight: 700; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+#bl-countdown.warn   { color: var(--orange); }
+#bl-countdown.lineup { color: var(--red); }
+#bl-countdown.normal { color: var(--muted); }
+
+/* Split panel */
+#split-panel { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+#panel-prev { flex: 0 0 38%; border-right: 1px solid var(--border); overflow-y: auto; padding: 14px 16px; }
+#panel-next { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+.panel-empty { color: var(--muted); font-size: 0.88rem; padding: 12px 0; }
+
+/* Previous events */
+.prev-event-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-bottom: 12px; }
+.prev-event-block { margin-bottom: 22px; padding-bottom: 22px; border-bottom: 2px solid var(--border); }
+.prev-event-block:last-child { border-bottom: none; margin-bottom: 0; }
+.prev-event-name  { font-size: 1.05rem; font-weight: 700; color: var(--text); padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid var(--border); width: 100%; }
+.prev-swimmer { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--divider); }
+.prev-swimmer:last-child { border-bottom: none; }
+.ps-badge { flex: 0 0 2.8rem; font-size: 1.1rem; font-weight: 800; text-align: center; line-height: 1.1; padding-top: 1px; }
+.ps-badge.p1 { color: #fbbf24; }
+.ps-badge.p2 { color: #94a3b8; }
+.ps-badge.p3 { color: #c07a3a; }
+.ps-right { flex: 1; min-width: 0; }
+.ps-row1 { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+.ps-name { font-size: 0.9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.ps-time { font-size: 0.95rem; font-weight: 700; color: var(--green); white-space: nowrap; flex-shrink: 0; }
+.ps-time.dq { color: var(--red); text-decoration: line-through; }
+.ps-delta { font-size: 0.8rem; font-weight: 600; }
+.ps-delta.fast { color: var(--green); }
+.ps-delta.slow { color: var(--orange); }
+.ps-row2 { display: flex; gap: 8px; align-items: center; margin-top: 3px; flex-wrap: wrap; }
+.ps-heat { font-size: 0.72rem; color: var(--muted); }
+.ps-qual { font-size: 0.7rem; font-weight: 700; color: var(--green); border: 1px solid var(--green); border-radius: 3px; padding: 0 4px; }
+.scoring-note { font-size: 0.75rem; color: var(--muted); margin-top: 6px; font-style: italic; }
+
+/* Next events */
+.next-event-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: border-color .2s; }
+.next-event-card.is-active  { border-color: var(--blue); }
+.next-event-card.is-lineup  { border-color: var(--red); }
+.next-event-card.is-warning { border-color: var(--orange); }
+.next-card-header  { padding: 10px 14px 8px; border-bottom: 1px solid var(--border); }
+.next-event-title  { font-size: 1.05rem; font-weight: 700; color: var(--text); padding-bottom: 6px; margin-bottom: 6px; border-bottom: 1px solid var(--border); }
+.next-event-time   { font-size: 0.88rem; color: var(--muted); }
+.next-event-time .eta-val  { color: var(--text); font-weight: 600; font-size: 0.95rem; }
+.next-swimmer-row  { display: flex; align-items: center; padding: 7px 14px; border-bottom: 1px solid var(--divider); gap: 8px; font-size: 0.9rem; }
+.next-swimmer-row:last-child { border-bottom: none; }
+.next-sw-name { flex: 1; font-weight: 500; }
+.next-sw-hl   { color: var(--text); font-size: 0.88rem; font-weight: 500; white-space: nowrap; }
+.next-sw-seed { font-size: 0.78rem; color: var(--muted); white-space: nowrap; text-align: right; min-width: 52px; }
+.in-water     { color: var(--blue); font-weight: 700; font-size: 0.78rem; }
+.relay-team-header { padding: 6px 14px 4px; font-size: 0.82rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--divider); background: var(--bg); }
+.relay-leg-row    { padding-left: 22px !important; }
+.relay-leg-num    { font-size: 0.8rem; color: var(--muted); min-width: 18px; flex-shrink: 0; }
+.relay-leg-stroke { font-size: 0.82rem; font-weight: 600; color: var(--blue); min-width: 52px; flex-shrink: 0; }
+.prev-relay-leg   { display: flex; align-items: center; gap: 8px; padding: 3px 14px 3px 30px; font-size: 0.88rem; border-top: 1px solid var(--divider); }
+
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+.pulse { animation: pulse 1.3s ease-in-out infinite; }
+
+/* Responsive */
+@media (max-width: 680px) {
+  #split-panel { flex-direction: column; overflow-y: auto; }
+  #panel-prev { flex: none; border-right: none; border-top: 1px solid var(--border); order: 2; overflow-y: visible; }
+  #panel-next { flex: none; order: 1; overflow-y: visible; }
+  #bt-clock { font-size: 1.6rem; }
+  #bl-countdown { font-size: 1.4rem; }
+}
+@media (orientation: landscape) and (max-height: 480px) {
+  #disp-header { padding: 5px 12px; }
+  #banner-top  { padding: 6px 14px; }
+  #banner-lineup { padding: 5px 14px; }
+  #bt-clock { font-size: 1.7rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Login ──────────────────────────────────────────── -->
+<div id="view-login" class="view hidden">
+  <div class="login-card">
+    <h1>SwimTopia Tent Display</h1>
+    <p class="subtitle">
+      Sign in with your SwimTopia account
+      <span class="privacy-icon" data-tip="Your credentials are used only to obtain a session token from SwimTopia. The token is stored in this browser tab only and is deleted when you close the tab. Your email and password are never stored, logged, or sent anywhere except directly to SwimTopia.">i</span>
+    </p>
+    <form id="login-form">
+      <div class="field">
+        <label>Email</label>
+        <input id="inp-email" type="email" autocomplete="email" placeholder="you@example.com" required>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input id="inp-password" type="password" autocomplete="current-password" required>
+      </div>
+      <button class="btn" id="login-btn" type="submit">Sign In</button>
+    </form>
+    <div id="login-error" class="error-msg"></div>
+  </div>
+</div>
+
+<!-- ── Meet Picker ────────────────────────────────────── -->
+<div id="view-meets" class="view hidden">
+  <div class="meets-header">
+    <h1>Select Meet</h1>
+    <div class="filter-row">
+      <div class="field">
+        <label>Age Group</label>
+        <select id="inp-age" disabled><option value="">Select a meet first</option></select>
+      </div>
+      <div class="field">
+        <label>Gender</label>
+        <select id="inp-gender">
+          <option value="M" selected>Boys</option>
+          <option value="F">Girls</option>
+          <option value="">Both</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Team</label>
+        <select id="inp-team" disabled><option value="">Select a meet first</option></select>
+      </div>
+      <div class="field">
+        <label>Lineup (min)</label>
+        <select id="inp-lineup">
+          <option value="5">5</option><option value="10">10</option><option value="15">15</option>
+          <option value="20" selected>20</option><option value="25">25</option><option value="30">30</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Warning (min)</label>
+        <select id="inp-warning">
+          <option value="5">5</option><option value="10">10</option><option value="15">15</option>
+          <option value="20">20</option><option value="25">25</option><option value="30" selected>30</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div id="meets-list"><div class="loading">Loading meets…</div></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;padding-bottom:32px;gap:12px;">
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Sign Out</button>
+      <button class="btn btn-ghost btn-sm" id="theme-btn-meets" onclick="toggleTheme()">☀️ Day</button>
+    </div>
+    <button class="btn btn-sm" id="go-btn" disabled
+      onclick="selectMeet(this.dataset.meetId, this.dataset.meetName)"
+      style="width:auto;padding:10px 28px;font-size:1rem;">
+      Launch Display ▶
+    </button>
+  </div>
+</div>
+
+<!-- ── Tent Display ───────────────────────────────────── -->
+<div id="view-display" class="view hidden">
+  <header id="disp-header">
+    <div class="dh-left">
+      <div class="dh-meet" id="dh-meet">Loading…</div>
+      <div class="dh-sub"  id="dh-sub"></div>
+    </div>
+    <div class="dh-right">
+      <button class="btn btn-ghost btn-sm" id="theme-btn-display" onclick="toggleTheme()">☀️ Day</button>
+      <button class="btn btn-ghost btn-sm" id="btn-back" onclick="backToMeets()">◀ Back</button>
+    </div>
+  </header>
+  <div id="banner-top">
+    <div class="bt-info">
+      <div class="bt-tag" id="bt-tag">WAITING</div>
+      <div class="bt-event" id="bt-event">No live event</div>
+    </div>
+    <div id="bt-clock">—</div>
+  </div>
+  <div id="banner-lineup" class="normal">
+    <div class="bl-left">
+      <div class="bl-tag normal" id="bl-tag">NEXT FOR YOUR SWIMMERS</div>
+      <div class="bl-event" id="bl-event">—</div>
+      <div class="bl-time"  id="bl-time"></div>
+    </div>
+    <div id="bl-countdown" class="normal">—</div>
+  </div>
+  <div id="split-panel">
+    <div id="panel-prev"></div>
+    <div id="panel-next"></div>
+  </div>
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "swimtopia-tent-display",
+  "version": "0.1.0",
+  "description": "Live swim meet tent display — upcoming events, countdowns, and results for your age group",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "serve": "serve -l 8080 .",
+    "demo": "echo 'Demo: http://localhost:8080/?demo' && serve -l 8080 ."
+  },
+  "devDependencies": {
+    "serve": "^14.2.4",
+    "vitest": "^3.2.0"
+  }
+}
