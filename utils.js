@@ -46,27 +46,25 @@ export function fmtDelta(offTime, seedTime) {
   return { str: (d < 0 ? '−' : '+') + fmtTime(Math.abs(d)), faster: d < 0 };
 }
 
+function _parseAgeGroup(grp) {
+  const s = grp.toLowerCase().replace(/\s/g, '');
+  if (s.includes('under') || s.endsWith('u') || s.includes('&u')) return { min: 0, max: parseInt(s, 10) };
+  if (s.includes('over') || s.endsWith('+')) return { min: parseInt(s, 10), max: Infinity };
+  const parts = s.replace(/[/_]/g, '-').split('-').map(Number);
+  if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) return { min: parts[0], max: parts[1] };
+  return null;
+}
+
 export function ageInRange(age, grp) {
   if (age == null) return false;
-  const s = grp.toLowerCase().replace(/\s/g,'');
-  if (s.includes('under') || s.endsWith('u') || s.includes('&u')) return age <= parseInt(s);
-  if (s.includes('over') || s.endsWith('+')) return age >= parseInt(s);
-  const parts = s.replace(/[/_]/g,'-').split('-').map(Number);
-  return parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1]) && age >= parts[0] && age <= parts[1];
+  const range = _parseAgeGroup(grp);
+  return range != null && age >= range.min && age <= range.max;
 }
 
 export function ageGroupOverlaps(minAge, maxAge, grp) {
   if (minAge == null || maxAge == null) return true;
-  const s = grp.toLowerCase().replace(/\s/g,'');
-  let gMin, gMax;
-  if (s.includes('under') || s.endsWith('u') || s.includes('&u')) { gMin = 0; gMax = parseInt(s); }
-  else if (s.includes('over') || s.endsWith('+')) { gMin = parseInt(s); gMax = 99; }
-  else {
-    const parts = s.replace(/[/_]/g,'-').split('-').map(Number);
-    if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) { gMin = parts[0]; gMax = parts[1]; }
-    else { gMin = gMax = parseInt(s) || 0; }
-  }
-  return gMax >= minAge && gMin <= maxAge;
+  const range = _parseAgeGroup(grp);
+  return range != null && range.max >= minAge && range.min <= maxAge;
 }
 
 export function checkQual(offTime, gender, age, distance, strokeCode, quals) {
@@ -106,7 +104,12 @@ export function upcomingGroups(swimmers) {
     }
   }
   const groups = Object.values(map);
-  groups.sort((a, b) => (a.etaEpoch ?? a.schedIdx ?? 0) - (b.etaEpoch ?? b.schedIdx ?? 0));
+  groups.sort((a, b) => {
+    if (a.etaEpoch && b.etaEpoch) return a.etaEpoch - b.etaEpoch;
+    if (a.etaEpoch) return -1;
+    if (b.etaEpoch) return 1;
+    return (a.schedIdx ?? 0) - (b.schedIdx ?? 0);
+  });
   for (const g of groups) g.entries.sort((a, b) => a.heatNum - b.heatNum || a.laneNum - b.laneNum);
   return groups;
 }

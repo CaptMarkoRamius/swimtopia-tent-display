@@ -14,6 +14,7 @@ export const S = {
   ageGroup:   '9-10',
   gender:     'M',
   teamFilter: 'HUR',
+  teamName:   '',        // full team name for display
   lineupMin:  20,
   warnMin:    30,
   swimmers:   [],   // assembled by assembly.js
@@ -23,6 +24,11 @@ export const S = {
   pollTimer:  null,
   tickTimer:  null,
   wakeLock:   null,
+  // static data cache — only re-fetched when nirvanaId changes
+  _staticNirvanaId: null,
+  _eventsRes:       null,
+  _teamsRes:        null,
+  _stdRes:          null,
 };
 
 export const $ = id => document.getElementById(id);

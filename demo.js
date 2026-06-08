@@ -15,6 +15,7 @@ export function loadDemoData() {
   S.ageGroup   = '9-10';
   S.gender     = 'M';
   S.teamFilter = 'HUR';
+  S.teamName   = 'Hurricane Swim Team';
   S.lineupMin  = 20;
   S.warnMin    = 30;
   S.updatedAt  = Date.now();

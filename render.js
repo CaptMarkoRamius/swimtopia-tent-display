@@ -18,7 +18,7 @@ export function renderAll() {
   renderNextPanel(now);
   $('dh-sub').textContent = S.ageGroup
     + (S.gender ? ' · ' + (S.gender === 'F' ? 'Girls' : 'Boys') : '')
-    + (S.teamFilter ? ` · ${S.teamFilter}` : '');
+    + (S.teamFilter ? ` · ${S.teamName || S.teamFilter}` : '');
 }
 
 // ── Top banner (live event in pool) ──────────────────────────────────────────
@@ -169,7 +169,7 @@ function _renderIndividualResults(entries) {
     const timeStr  = e.isDq ? 'DQ' : e.isScratched ? 'SCR' : (e.offTime != null ? fmtTime(e.offTime) : '—');
     const timeCls  = e.isDq ? 'dq' : e.isScratched ? 'scr' : '';
     const delta    = fmtDelta(e.offTime, e.seedTime);
-    const heatPlSt = e.heatNum
+    const heatPlSt = e.heatNum != null
       ? `Heat ${e.heatNum}${e.heatPlace && ORDINAL[e.heatPlace] ? ` · ${ORDINAL[e.heatPlace]}` : ''}`
       : '';
     html += `<div class="prev-swimmer">
@@ -199,7 +199,7 @@ export function renderNextPanel(now) {
   if (!groups.length) {
     panel.innerHTML = S.swimmers.length
       ? '<div class="panel-empty">All events complete.</div>'
-      : `<div class="loading" style="color:var(--yellow)">No swimmers found for ${esc(S.ageGroup)}${S.gender ? ' ' + (S.gender === 'F' ? 'Girls' : 'Boys') : ''}${S.teamFilter ? ' · ' + S.teamFilter : ''}.</div>`;
+      : `<div class="loading" style="color:var(--yellow)">No swimmers found for ${esc(S.ageGroup)}${S.gender ? ' ' + (S.gender === 'F' ? 'Girls' : 'Boys') : ''}${S.teamFilter ? ' · ' + esc(S.teamFilter) : ''}.</div>`;
     return;
   }
 
@@ -219,7 +219,7 @@ export function renderNextPanel(now) {
       ? new Date(lineupAt * 1000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
       : '—';
     const etaStr = g.etaEpoch
-      ? `Est. <span class="eta-val">${g.etaDisplay}</span>&ensp;·&ensp;Lineup <span class="eta-val">${lineupTimeStr}</span>`
+      ? `Est. <span class="eta-val">${esc(g.etaDisplay)}</span>&ensp;·&ensp;Lineup <span class="eta-val">${esc(lineupTimeStr)}</span>`
       : '';
 
     const isRelayEvent = g.entries.some(e => e.isRelay);
@@ -276,5 +276,4 @@ export function tick() {
   const now = Math.floor(Date.now() / 1000);
   $('bt-clock').textContent = fmtClock(new Date());
   renderLineupBanner(now);
-  if (now % 30 === 0) renderAll();
 }

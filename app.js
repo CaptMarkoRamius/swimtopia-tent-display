@@ -66,7 +66,7 @@ export async function goToMeetPicker() {
     const isUpcoming = m => (m.attributes.startDate ?? '') >= TODAY;
     meets.sort((a, b) => {
       const ua = isUpcoming(a), ub = isUpcoming(b);
-      if (!ua && ub) return -1; if (ua && !ub) return 1;
+      if (ua && !ub) return -1; if (!ua && ub) return 1;
       return (a.attributes.startDate ?? '').localeCompare(b.attributes.startDate ?? '');
     });
     _renderMeetList(meets, isUpcoming);
@@ -112,7 +112,7 @@ export async function loadTeamsForMeet(meetId, meetName, cardEl) {
       (a.attributes?.abbreviation ?? '').localeCompare(b.attributes?.abbreviation ?? ''));
     teamSel.innerHTML = '<option value="">All teams</option>' + sorted.map(t => {
       const abbr = t.attributes?.abbreviation ?? '';
-      return `<option value="${abbr}"${abbr === 'HUR' ? ' selected' : ''}>${abbr} — ${t.attributes?.name ?? abbr}</option>`;
+      return `<option value="${esc(abbr)}"${abbr === 'HUR' ? ' selected' : ''}>${esc(abbr)} — ${esc(t.attributes?.name ?? abbr)}</option>`;
     }).join('');
     teamSel.disabled = false;
   };
@@ -163,10 +163,15 @@ export async function selectMeet(meetId, meetName) {
   S.meetId     = meetId;
   S.ageGroup   = $('inp-age').value;
   S.gender     = $('inp-gender').value;
-  S.teamFilter = $('inp-team').value.toUpperCase();
-  S.lineupMin  = parseInt($('inp-lineup').value)  || 20;
-  S.warnMin    = parseInt($('inp-warning').value) || 30;
+  S.lineupMin  = parseInt($('inp-lineup').value, 10)  || 20;
+  S.warnMin    = parseInt($('inp-warning').value, 10) || 30;
   sessionStorage.setItem('st_age', S.ageGroup);
+
+  const teamSel = $('inp-team');
+  S.teamFilter = teamSel.value.toUpperCase();
+  const selOpt  = teamSel.options[teamSel.selectedIndex];
+  const optParts = selOpt?.text?.split(' — ') ?? [];
+  S.teamName = S.teamFilter && optParts.length > 1 ? optParts.slice(1).join(' — ') : '';
 
   $('dh-meet').textContent  = meetName;
   $('dh-sub').textContent   = '';
@@ -191,13 +196,25 @@ export async function refreshData() {
 
     if (!S.nirvanaId) { await _loadSwimEntries(); return; }
 
-    const [heatsRes, eventsRes, teamsRes, stdRes, trackerRes] = await Promise.all([
+    // Static data (events, teams, standards) only changes between meets — cache it.
+    if (S._staticNirvanaId !== S.nirvanaId) {
+      const [eventsRes, teamsRes, stdRes] = await Promise.all([
+        fetchNirvanaEvents(S.nirvanaId),
+        fetchNirvanaTeams(S.nirvanaId),
+        fetchTimeStandards(S.meetId),
+      ]);
+      S._staticNirvanaId = S.nirvanaId;
+      S._eventsRes = eventsRes;
+      S._teamsRes  = teamsRes;
+      S._stdRes    = stdRes;
+    }
+
+    const [heatsRes, trackerRes] = await Promise.all([
       fetchNirvanaHeats(S.nirvanaId),
-      fetchNirvanaEvents(S.nirvanaId),
-      fetchNirvanaTeams(S.nirvanaId),
-      fetchTimeStandards(S.meetId),
       fetchHeatTracker(S.meetId),
     ]);
+
+    const { _eventsRes: eventsRes, _teamsRes: teamsRes, _stdRes: stdRes } = S;
 
     // Resolve team filter
     let targetTeamId = null;
@@ -230,14 +247,15 @@ export async function refreshData() {
       }
     }
 
-    // Batch-fetch athletes
-    const athletes = {};
+    // Batch-fetch athletes in parallel (100 per request)
     const ids = [...athleteIds];
-    for (let i = 0; i < ids.length; i += 100) {
-      const resp = await fetchAthletes(S.nirvanaId, ids.slice(i, i + 100));
+    const chunks = [];
+    for (let i = 0; i < ids.length; i += 100) chunks.push(ids.slice(i, i + 100));
+    const athleteResps = await Promise.all(chunks.map(chunk => fetchAthletes(S.nirvanaId, chunk)));
+    const athletes = {};
+    for (const resp of athleteResps)
       for (const a of (resp.data || []))
         athletes[a.id] = { ...a.attributes, _teamId: a.relationships?.nirvanaTeam?.data?.id ?? null };
-    }
 
     const { assembled, quals } = assembleSwimmers(
       heatsRes.data, rawEntries, rawResults, relayLegMap,
@@ -331,7 +349,9 @@ async function _loadSwimEntries() {
     }
 
     S.updatedAt = Date.now();
-    $('dh-sub').textContent = S.ageGroup + (S.gender ? ' · ' + (S.gender === 'M' ? 'Boys' : 'Girls') : '');
+    $('dh-sub').textContent = S.ageGroup
+      + (S.gender ? ' · ' + (S.gender === 'M' ? 'Boys' : 'Girls') : '')
+      + (S.teamFilter ? ` · ${S.teamName || S.teamFilter}` : '');
 
   } catch (ex) {
     $('panel-next').innerHTML = `<div class="loading" style="color:var(--red)">Error loading entries: ${esc(ex.message)}</div>`;
@@ -379,7 +399,7 @@ export function releaseWakeLock() {
 
 // ── Font size ─────────────────────────────────────────────────────────────────
 
-let _fontPct = parseInt(localStorage.getItem('st_font') || '100');
+let _fontPct = parseInt(localStorage.getItem('st_font') || '100', 10);
 
 function _applyFontSize() {
   document.documentElement.style.fontSize = _fontPct + '%';

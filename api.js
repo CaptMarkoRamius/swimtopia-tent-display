@@ -58,7 +58,7 @@ export async function paginate(path, params = {}, size = 25) {
     out.data.push(...(page.data ?? []));
     out.included.push(...(page.included ?? []));
     offset += size;
-    if (offset >= (page.meta?.count ?? 0)) break;
+    if (page.data.length < size) break;
   }
   return out;
 }
