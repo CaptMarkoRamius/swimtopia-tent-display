@@ -101,7 +101,7 @@ describe('assembleQuals', () => {
     const included = [
       { type: 'timeStandard',      id: 'std1', attributes: { label: 'INV' }, relationships: {} },
       { type: 'timeStandardEvent', id: 'tse1', attributes: { distance: 50, strokeCode: 1, athleteGender: 'F', athleteMinAge: 9, athleteMaxAge: 10 }, relationships: {} },
-      { type: 'timeStandardCut',   id: 'cut1', attributes: { timeInt: 3500 },
+      { type: 'timeStandardCut',   id: 'cut1', attributes: { cutTimeInt: 3500 },
         relationships: { timeStandardEvent: { data: { id: 'tse1' } } } },
     ];
     const quals = assembleQuals(included);
@@ -112,7 +112,7 @@ describe('assembleQuals', () => {
   it('falls back to INV label when no timeStandard object present', () => {
     const included = [
       { type: 'timeStandardEvent', id: 'tse1', attributes: { distance: 50, strokeCode: 1, athleteGender: 'F', athleteMinAge: null, athleteMaxAge: null }, relationships: {} },
-      { type: 'timeStandardCut',   id: 'cut1', attributes: { timeInt: 3500 },
+      { type: 'timeStandardCut',   id: 'cut1', attributes: { cutTimeInt: 3500 },
         relationships: { timeStandardEvent: { data: { id: 'tse1' } } } },
     ];
     expect(assembleQuals(included)[0].label).toBe('INV');
@@ -129,7 +129,7 @@ describe('assembleQuals', () => {
   it('skips timeStandardEvents without distance or strokeCode', () => {
     const included = [
       { type: 'timeStandardEvent', id: 'tse1', attributes: { distance: null, strokeCode: null, athleteGender: 'F', athleteMinAge: null, athleteMaxAge: null }, relationships: {} },
-      { type: 'timeStandardCut',   id: 'cut1', attributes: { timeInt: 3500 },
+      { type: 'timeStandardCut',   id: 'cut1', attributes: { cutTimeInt: 3500 },
         relationships: { timeStandardEvent: { data: { id: 'tse1' } } } },
     ];
     expect(assembleQuals(included)).toHaveLength(0);
@@ -140,8 +140,8 @@ describe('assembleQuals', () => {
       { type: 'timeStandard',      id: 'std1', attributes: { label: 'INV' }, relationships: {} },
       { type: 'timeStandardEvent', id: 'tse1', attributes: { distance: 50,  strokeCode: 1, athleteGender: 'F', athleteMinAge: 9, athleteMaxAge: 10 }, relationships: {} },
       { type: 'timeStandardEvent', id: 'tse2', attributes: { distance: 100, strokeCode: 2, athleteGender: 'M', athleteMinAge: 11, athleteMaxAge: 12 }, relationships: {} },
-      { type: 'timeStandardCut',   id: 'cut1', attributes: { timeInt: 3500 }, relationships: { timeStandardEvent: { data: { id: 'tse1' } } } },
-      { type: 'timeStandardCut',   id: 'cut2', attributes: { timeInt: 7000 }, relationships: { timeStandardEvent: { data: { id: 'tse2' } } } },
+      { type: 'timeStandardCut',   id: 'cut1', attributes: { cutTimeInt: 3500 }, relationships: { timeStandardEvent: { data: { id: 'tse1' } } } },
+      { type: 'timeStandardCut',   id: 'cut2', attributes: { cutTimeInt: 7000 }, relationships: { timeStandardEvent: { data: { id: 'tse2' } } } },
     ];
     expect(assembleQuals(included)).toHaveLength(2);
   });
@@ -256,7 +256,7 @@ describe('assembleSwimmers — individual entry', () => {
     const stdIncluded = [
       { type: 'timeStandard',      id: 'std1', attributes: { label: 'INV' }, relationships: {} },
       { type: 'timeStandardEvent', id: 'tse1', attributes: { distance: 50, strokeCode: 1, athleteGender: 'F', athleteMinAge: 9, athleteMaxAge: 10 }, relationships: {} },
-      { type: 'timeStandardCut',   id: 'cut1', attributes: { timeInt: 3500 }, relationships: { timeStandardEvent: { data: { id: 'tse1' } } } },
+      { type: 'timeStandardCut',   id: 'cut1', attributes: { cutTimeInt: 3500 }, relationships: { timeStandardEvent: { data: { id: 'tse1' } } } },
     ];
     const heats   = [makeHeat('h1', 'ev1', ['en1'], { status: 'done' })];
     const entries = [withResult(makeEntry('en1', 'ath1'), 'r1')];
@@ -269,7 +269,7 @@ describe('assembleSwimmers — individual entry', () => {
     const stdIncluded = [
       { type: 'timeStandard',      id: 'std1', attributes: { label: 'INV' }, relationships: {} },
       { type: 'timeStandardEvent', id: 'tse1', attributes: { distance: 50, strokeCode: 1, athleteGender: 'F', athleteMinAge: 9, athleteMaxAge: 10 }, relationships: {} },
-      { type: 'timeStandardCut',   id: 'cut1', attributes: { timeInt: 3500 }, relationships: { timeStandardEvent: { data: { id: 'tse1' } } } },
+      { type: 'timeStandardCut',   id: 'cut1', attributes: { cutTimeInt: 3500 }, relationships: { timeStandardEvent: { data: { id: 'tse1' } } } },
     ];
     const heats   = [makeHeat('h1', 'ev1', ['en1'], { status: 'done' })];
     const entries = [withResult(makeEntry('en1', 'ath1'), 'r1')];

@@ -20,7 +20,7 @@ export function assembleQuals(stdIncluded) {
     const tea = tse.attributes;
     if (!tea?.distance || !tea?.strokeCode) continue;
     quals.push({
-      label: stdLabel, cutTime: a.timeInt,
+      label: stdLabel, cutTime: a.cutTimeInt,
       gender: tea.athleteGender,
       ageMin: tea.athleteMinAge, ageMax: tea.athleteMaxAge,
       distance: tea.distance, strokeCode: tea.strokeCode,
