@@ -386,17 +386,21 @@ export function stopTimers() {
 // ── Screen wake lock ──────────────────────────────────────────────────────────
 
 export async function acquireWakeLock() {
+  if (!('wakeLock' in navigator)) return;
   try {
-    if ('wakeLock' in navigator)
-      S.wakeLock = await navigator.wakeLock.request('screen');
+    S.wakeLock = await navigator.wakeLock.request('screen');
+    S.wakeLock.addEventListener('release', () => {
+      S.wakeLock = null;
+      // Re-acquire immediately if the page is still visible (OS released it)
+      if (document.visibilityState === 'visible') acquireWakeLock();
+    });
   } catch (_) { /* non-fatal */ }
 }
 
-// Registered once — re-acquires the wake lock whenever the tab becomes visible again.
+// Re-acquire after the tab returns from background (browser always releases on hide)
 if ('wakeLock' in navigator) {
-  document.addEventListener('visibilitychange', async () => {
-    if (document.visibilityState === 'visible' && S.wakeLock)
-      S.wakeLock = await navigator.wakeLock.request('screen').catch(() => null);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') acquireWakeLock();
   });
 }
 
