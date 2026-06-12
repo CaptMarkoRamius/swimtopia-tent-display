@@ -258,14 +258,18 @@ export function renderNextPanel(now) {
     if (isRelayEvent) {
       const teamMap = {};
       for (const e of g.entries) {
-        const key = e.relayTeam ?? '';
-        if (!teamMap[key]) teamMap[key] = { relayTeam: e.relayTeam, laneNum: e.laneNum, legs: [] };
+        const key = `${e.heatNum ?? 0}-${e.relayTeam ?? ''}`;
+        if (!teamMap[key]) teamMap[key] = { heatNum: e.heatNum, relayTeam: e.relayTeam, laneNum: e.laneNum, legs: [] };
         teamMap[key].legs.push(e);
       }
-      for (const [, t] of Object.entries(teamMap).sort()) {
+      const teams = Object.values(teamMap).sort((a, b) =>
+        (a.heatNum ?? 0) - (b.heatNum ?? 0) || (a.relayTeam ?? '').localeCompare(b.relayTeam ?? '')
+      );
+      for (const t of teams) {
         t.legs.sort((a, b) => (a.legPosition ?? 99) - (b.legPosition ?? 99));
-        const label = t.relayTeam ? `Relay ${esc(t.relayTeam)}` : 'Relay';
-        entriesHtml += `<div class="relay-team-header">${label} · Lane ${t.laneNum}</div>`;
+        const label   = t.relayTeam ? `Relay ${esc(t.relayTeam)}` : 'Relay';
+        const heatBit = t.heatNum != null ? `Heat ${t.heatNum} · ` : '';
+        entriesHtml += `<div class="relay-team-header">${heatBit}${label} · Lane ${t.laneNum}</div>`;
         for (const leg of t.legs) {
           const inWater   = leg.status === 'inProgress' ? `<span class="in-water pulse">In water</span>` : '';
           const strokeBit = leg.legStroke ? `<span class="relay-leg-stroke">${esc(STROKE[leg.legStroke] ?? '')}</span>` : '';
