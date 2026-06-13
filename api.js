@@ -93,11 +93,15 @@ export const fetchTimeStandards   = meetId    =>
     include: 'time_standards,time_standard_events,time_standard_events.time_standard_cuts',
   }).catch(() => ({ included: [] }));
 
-// Falls back to the most recent meet whose name contains "invitational" (case-insensitive)
-// if the current meet has no time standards configured.
-export async function fetchFallbackStandards(orgId, excludeMeetId) {
-  const cal = await api(`organizations/${orgId}/calendar-events`, { 'page[size]': 100 })
-    .catch(() => ({ data: [] }));
+// Falls back to the nearest future meet whose name contains "invitational" (case-insensitive)
+// if the current meet has no time standards configured. Uses meetDate as the lower bound so
+// it works correctly across year boundaries (e.g. Dec/Jan seasons).
+export async function fetchFallbackStandards(orgId, excludeMeetId, meetDate) {
+  const after = meetDate || new Date().toISOString().slice(0, 10);
+  const cal = await api(`organizations/${orgId}/calendar-events`, {
+    'filter[after]': after,
+    'page[size]': 100,
+  }).catch(() => ({ data: [] }));
   const candidates = (cal.data || [])
     .filter(e =>
       e.attributes?.stiType === 'SwimMeet' &&
@@ -107,7 +111,7 @@ export async function fetchFallbackStandards(orgId, excludeMeetId) {
     .sort((a, b) => {
       const da = new Date(a.attributes?.startDate || a.attributes?.startsAt || 0);
       const db = new Date(b.attributes?.startDate || b.attributes?.startsAt || 0);
-      return db - da;
+      return da - db;  // ascending — nearest next invitational first
     });
   for (const meet of candidates) {
     const std = await fetchTimeStandards(meet.id);

@@ -10,6 +10,7 @@ export const S = {
   token:      sessionStorage.getItem('st_token'),
   orgId:      sessionStorage.getItem('st_org'),
   meetId:     null,
+  meetDate:   null,  // ISO date string (YYYY-MM-DD) of the selected meet
   nirvanaId:  null,
   ageGroups:  ['9-10'],
   gender:     'M',

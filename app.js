@@ -95,12 +95,12 @@ function _renderMeetList(meets, isUpcoming) {
       <div class="meet-card-meta">
         <span>${esc(date)}</span>${a.location ? `<span>${esc(a.location)}</span>` : ''}
       </div>`;
-    div.onclick = () => loadTeamsForMeet(m.id, a.name, div);
+    div.onclick = () => loadTeamsForMeet(m.id, a.name, a.startDate ?? '', div);
     list.appendChild(div);
   }
 }
 
-export async function loadTeamsForMeet(meetId, meetName, cardEl) {
+export async function loadTeamsForMeet(meetId, meetName, meetDate, cardEl) {
   const teamSel  = $('inp-team'), pillsEl = $('inp-age-pills'), goBtn = $('go-btn');
   teamSel.disabled = goBtn.disabled = true;
   teamSel.innerHTML = '<option value="">Loading…</option>';
@@ -157,7 +157,7 @@ export async function loadTeamsForMeet(meetId, meetName, cardEl) {
       else { teamSel.innerHTML = '<option value="">All teams</option>'; teamSel.disabled = false; }
       populateAgeGroups(STANDARD_AGE_GROUPS);
     }
-    goBtn.dataset.meetId = meetId; goBtn.dataset.meetName = meetName;
+    goBtn.dataset.meetId = meetId; goBtn.dataset.meetName = meetName; goBtn.dataset.meetDate = meetDate;
     goBtn.disabled = false;
   } catch (ex) {
     teamSel.innerHTML = '<option value="">Error loading</option>';
@@ -169,6 +169,15 @@ export async function loadTeamsForMeet(meetId, meetName, cardEl) {
 
 export async function selectMeet(meetId, meetName) {
   S.meetId     = meetId;
+  S.meetDate   = $('go-btn').dataset.meetDate || null;
+  S.nirvanaId        = null;
+  S._staticNirvanaId = null;
+  S._eventsRes       = null;
+  S._teamsRes        = null;
+  S._stdRes          = null;
+  S.swimmers         = [];
+  S.quals            = [];
+  S.tracker          = null;
   S.ageGroups  = [...document.querySelectorAll('#inp-age-pills input:checked')].map(cb => cb.value);
   if (!S.ageGroups.length) S.ageGroups = ['9-10'];
   S.gender     = $('inp-gender').value;
@@ -216,7 +225,7 @@ export async function refreshData() {
       ]);
       const stdRes = (stdRes0.included || []).length
         ? stdRes0
-        : await fetchFallbackStandards(S.orgId, S.meetId);
+        : await fetchFallbackStandards(S.orgId, S.meetId, S.meetDate);
       S._staticNirvanaId = S.nirvanaId;
       S._eventsRes = eventsRes;
       S._teamsRes  = teamsRes;
