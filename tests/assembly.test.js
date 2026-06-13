@@ -118,6 +118,23 @@ describe('assembleQuals', () => {
     expect(assembleQuals(included)[0].label).toBe('INV');
   });
 
+  it('uses each cut\'s own standard label when multiple standards are present', () => {
+    const included = [
+      { type: 'timeStandard',      id: 'std1', attributes: { label: 'INV' },  relationships: {} },
+      { type: 'timeStandard',      id: 'std2', attributes: { label: 'NCSA' }, relationships: {} },
+      { type: 'timeStandardEvent', id: 'tse1', attributes: { distance: 50, strokeCode: 1, athleteGender: 'F', athleteMinAge: 9, athleteMaxAge: 10 }, relationships: {} },
+      { type: 'timeStandardEvent', id: 'tse2', attributes: { distance: 50, strokeCode: 1, athleteGender: 'F', athleteMinAge: 9, athleteMaxAge: 10 }, relationships: {} },
+      { type: 'timeStandardCut',   id: 'cut1', attributes: { timeInt: 3500 },
+        relationships: { timeStandardEvent: { data: { id: 'tse1' } }, timeStandard: { data: { id: 'std1' } } } },
+      { type: 'timeStandardCut',   id: 'cut2', attributes: { timeInt: 3200 },
+        relationships: { timeStandardEvent: { data: { id: 'tse2' } }, timeStandard: { data: { id: 'std2' } } } },
+    ];
+    const quals = assembleQuals(included);
+    expect(quals).toHaveLength(2);
+    const labels = quals.map(q => q.label).sort();
+    expect(labels).toEqual(['INV', 'NCSA']);
+  });
+
   it('skips cuts whose timeStandardEvent is missing', () => {
     const included = [
       { type: 'timeStandardCut', id: 'cut1', attributes: { timeInt: 3500 },
@@ -276,6 +293,16 @@ describe('assembleSwimmers — individual entry', () => {
     const results = [makeResult('r1', { officialTimeInt: 3600 })];
     const { assembled } = run(heats, entries, results, { ath1: makeAthlete() }, [makeEvent('ev1')], { stdIncluded });
     expect(assembled[0].events[0].qualifying).toEqual([]);
+  });
+
+  it('sets distance and strokeCode on the event', () => {
+    const heats    = [makeHeat('h1', 'ev1', ['en1'])];
+    const entries  = [makeEntry('en1', 'ath1')];
+    const athletes = { ath1: makeAthlete() };
+    const events   = [makeEvent('ev1', { distance: 25, strokeCode: 4 })];
+    const { assembled } = run(heats, entries, NO_RESULTS, athletes, events);
+    expect(assembled[0].events[0].distance).toBe(25);
+    expect(assembled[0].events[0].strokeCode).toBe(4);
   });
 
   it('accumulates multiple events for the same swimmer', () => {
@@ -483,6 +510,29 @@ describe('assembleSwimmers — relay entries', () => {
     const { assembled } = run(heats, entries, NO_RESULTS, athletes, events, { relayLegMap, ageGroups: '9-10' });
     expect(assembled).toHaveLength(1);
     expect(assembled[0].lastName).toBe('AA');
+  });
+
+  it('marks relay as scratched when heat is done with no time and no DQ', () => {
+    const heats   = [makeHeat('h1', 'ev1', ['en1'], { status: 'done' })];
+    const entry   = withResult(makeRelayEntry('en1', 'team1'), 'r1');
+    const results = [makeResult('r1', { officialTimeInt: null, isDq: false, invalidCode: null })];
+    const relayLegMap = { en1: [{ athleteId: 'ath1', position: 1, strokeCode: 1 }] };
+    const athletes = { ath1: makeAthlete('ath1', { firstName: 'A', lastName: 'A', competitionAge: 9, gender: 'F', _teamId: 'team1' }) };
+    const events = [makeEvent('ev1', { eventType: 'relay', distance: 100, strokeCode: null, minAge: 9, maxAge: 10 })];
+    const { assembled } = run(heats, [entry], results, athletes, events, { relayLegMap, ageGroups: '9-10' });
+    expect(assembled[0].events[0].isScratched).toBe(true);
+  });
+
+  it('does not mark relay as scratched when isDq is true', () => {
+    const heats   = [makeHeat('h1', 'ev1', ['en1'], { status: 'done' })];
+    const entry   = withResult(makeRelayEntry('en1', 'team1'), 'r1');
+    const results = [makeResult('r1', { officialTimeInt: null, isDq: true, invalidCode: null })];
+    const relayLegMap = { en1: [{ athleteId: 'ath1', position: 1, strokeCode: 1 }] };
+    const athletes = { ath1: makeAthlete('ath1', { firstName: 'A', lastName: 'A', competitionAge: 9, gender: 'F', _teamId: 'team1' }) };
+    const events = [makeEvent('ev1', { eventType: 'relay', distance: 100, strokeCode: null, minAge: 9, maxAge: 10 })];
+    const { assembled } = run(heats, [entry], results, athletes, events, { relayLegMap, ageGroups: '9-10' });
+    expect(assembled[0].events[0].isScratched).toBe(false);
+    expect(assembled[0].events[0].isDq).toBe(true);
   });
 
   it('shares offTime and place across all legs', () => {

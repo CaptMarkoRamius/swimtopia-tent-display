@@ -22,7 +22,7 @@ export const STANDARD_AGE_GROUPS = [
 ];
 
 export function fmtTime(h) {
-  if (h == null) return '—';
+  if (h == null || h < 0) return '—';
   const s = Math.floor(h / 100), c = h % 100;
   const m = Math.floor(s / 60), r = s % 60;
   return m
@@ -68,7 +68,7 @@ export function ageGroupOverlaps(minAge, maxAge, grp) {
 }
 
 export function checkQual(offTime, gender, age, distance, strokeCode, quals) {
-  if (!offTime || !quals.length) return [];
+  if (offTime == null || !quals.length) return [];
   return quals
     .filter(q =>
       (!q.gender || q.gender === gender) &&

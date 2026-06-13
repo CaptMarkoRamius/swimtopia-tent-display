@@ -16,10 +16,11 @@ const lineupEpoch = etaEpoch => Math.floor((etaEpoch - S.lineupMin * 60) / 60) *
 
 export function renderAll() {
   const now = Math.floor(Date.now() / 1000);
+  const upcoming = upcomingGroups();
   renderTopBanner();
-  renderLineupBanner(now);
+  renderLineupBanner(now, upcoming);
   renderPrevPanel();
-  renderNextPanel(now);
+  renderNextPanel(now, upcoming);
   $('dh-sub').textContent = (S.ageGroups ?? []).join(', ')
     + (S.gender ? ' · ' + (S.gender === 'F' ? 'Girls' : 'Boys') : '')
     + (S.teamFilter ? ` · ${S.teamName || S.teamFilter}` : '');
@@ -58,10 +59,11 @@ export function renderTopBanner() {
 
 let _bannerStateKey = null;
 const _soundedKeys = new Set();
+export function resetBannerState() { _soundedKeys.clear(); _bannerStateKey = null; }
 
-export function renderLineupBanner(now) {
+export function renderLineupBanner(now, prebuiltGroups = null) {
   // Exclude events where all entries are already in the water — advance past them
-  const candidates = upcomingGroups().filter(g => g.entries.some(e => e.status === 'upcoming'));
+  const candidates = (prebuiltGroups ?? upcomingGroups()).filter(g => g.entries.some(e => e.status === 'upcoming'));
 
   // Only show events within the warn/lineup window (ephemeral — hide banner otherwise)
   const qualifying = candidates.filter(g => {
@@ -168,7 +170,10 @@ function _renderRelayResultBlock(entries) {
   const teamMap = {};
   for (const e of entries) {
     const key = e.relayTeam ?? '';
-    if (!teamMap[key]) teamMap[key] = { relayTeam: e.relayTeam, place: e.place, offTime: e.offTime, legs: [] };
+    if (!teamMap[key]) teamMap[key] = {
+      relayTeam: e.relayTeam, place: e.place, offTime: e.offTime,
+      isDq: e.isDq, isScratched: e.isScratched, legs: [],
+    };
     teamMap[key].legs.push(e);
   }
   for (const [, t] of Object.entries(teamMap).sort()) {
@@ -177,12 +182,14 @@ function _renderRelayResultBlock(entries) {
     const placeStr = placeN && ORDINAL[placeN] ? ORDINAL[placeN] : '—';
     const badgeCls = placeN === 1 ? 'ps-badge p1' : placeN === 2 ? 'ps-badge p2' : placeN === 3 ? 'ps-badge p3' : 'ps-badge';
     const label    = t.relayTeam ? `Relay ${esc(t.relayTeam)}` : 'Relay';
+    const timeStr  = t.isDq ? 'DQ' : t.isScratched ? 'SCR' : (t.offTime != null ? fmtTime(t.offTime) : '—');
+    const timeCls  = t.isDq ? 'dq' : t.isScratched ? 'scr' : '';
     html += `<div class="prev-swimmer">
       <div class="${badgeCls}">${placeStr}</div>
       <div class="ps-right">
         <div class="ps-row1">
           <span class="ps-name">${label}</span>
-          <span class="ps-time">${t.offTime != null ? fmtTime(t.offTime) : '—'}</span>
+          <span class="ps-time ${timeCls}">${timeStr}</span>
         </div>
       </div>
     </div>`;
@@ -233,9 +240,9 @@ function _renderIndividualResults(entries) {
 
 // ── Upcoming events panel ────────────────────────────────────────────────────
 
-export function renderNextPanel(now) {
+export function renderNextPanel(now, prebuiltGroups = null) {
   const panel  = $('panel-next');
-  const groups = upcomingGroups();
+  const groups = prebuiltGroups ?? upcomingGroups();
 
   if (!groups.length) {
     panel.innerHTML = S.swimmers.length

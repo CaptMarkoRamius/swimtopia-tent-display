@@ -9,7 +9,6 @@ export function assembleQuals(stdIncluded) {
   const quals = [];
   const idx = {};
   for (const o of stdIncluded) idx[`${o.type}:${o.id}`] = o;
-  const stdLabel = stdIncluded.find(o => o.type === 'timeStandard')?.attributes?.label ?? 'INV';
 
   for (const o of stdIncluded) {
     if (o.type !== 'timeStandardCut') continue;
@@ -19,8 +18,10 @@ export function assembleQuals(stdIncluded) {
     if (!tse) continue;
     const tea = tse.attributes;
     if (!tea?.distance || !tea?.strokeCode) continue;
+    const stdId = o.relationships?.timeStandard?.data?.id;
+    const label = idx[`timeStandard:${stdId}`]?.attributes?.label ?? 'INV';
     quals.push({
-      label: stdLabel, cutTime: a.timeInt,
+      label, cutTime: a.timeInt,
       gender: tea.athleteGender,
       ageMin: tea.athleteMinAge, ageMax: tea.athleteMaxAge,
       distance: tea.distance, strokeCode: tea.strokeCode,
@@ -31,14 +32,7 @@ export function assembleQuals(stdIncluded) {
 
 // ── Swimmer assembly ──────────────────────────────────────────────────────────
 
-export function assembleSwimmers(
-  heatsData, rawEntries, rawResults, relayLegMap,
-  athletes, eventsData, stdIncluded,
-  targetTeamId, ageGroups, gender
-) {
-  const quals = assembleQuals(stdIncluded);
-
-  // Build event detail index
+export function buildEvDetails(eventsData) {
   const evDetails = {};
   for (const ev of eventsData) {
     const a = ev.attributes;
@@ -54,6 +48,17 @@ export function assembleSwimmers(
       isRelay,
     };
   }
+  return evDetails;
+}
+
+export function assembleSwimmers(
+  heatsData, rawEntries, rawResults, relayLegMap,
+  athletes, eventsData, stdIncluded,
+  targetTeamId, ageGroups, gender,
+  cachedEvDetails = null
+) {
+  const quals = assembleQuals(stdIncluded);
+  const evDetails = cachedEvDetails ?? buildEvDetails(eventsData);
 
   const swimmerMap = {};
 
@@ -149,6 +154,7 @@ export function assembleSwimmers(
           offTime, seedTime: null,
           place: ra.overallPlace ?? null, heatPlace: null,
           isDq: ra.isDq ?? false, isInvalid: ra.invalidCode != null,
+          isScratched: ha.status === 'done' && offTime == null && !(ra.isDq ?? false) && ra.invalidCode == null,
           qualifying: [], isRelay: true,
           relayTeam, legPosition: leg.position, legStroke: leg.strokeCode,
         });

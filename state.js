@@ -28,8 +28,12 @@ export const S = {
   // static data cache — only re-fetched when nirvanaId changes
   _staticNirvanaId: null,
   _eventsRes:       null,
+  _evDetails:       null,  // pre-built from _eventsRes.data
   _teamsRes:        null,
   _stdRes:          null,
+  // per-meet caches reset on meet switch
+  _athletes:        {},     // id → athlete attributes; fetched once, never re-fetched
+  _hasInProgress:   false,  // were any heats in-progress on the last fetch?
 };
 
 export const $ = id => document.getElementById(id);

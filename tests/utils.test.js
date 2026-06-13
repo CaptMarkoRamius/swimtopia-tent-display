@@ -23,6 +23,7 @@ describe('esc', () => {
 describe('fmtTime', () => {
   it('returns dash for null', () => expect(fmtTime(null)).toBe('—'));
   it('returns dash for undefined', () => expect(fmtTime(undefined)).toBe('—'));
+  it('returns dash for negative', () => expect(fmtTime(-1)).toBe('—'));
   it('formats sub-minute', () => expect(fmtTime(3709)).toBe('37.09'));
   it('formats zero cents', () => expect(fmtTime(3700)).toBe('37.00'));
   it('formats exactly one minute', () => expect(fmtTime(6000)).toBe('1:00.00'));
@@ -133,7 +134,9 @@ describe('checkQual', () => {
   it('age too high', () => expect(checkQual(3400, 'F', 11, 50, 1, INV_QUALS)).toEqual([]));
   it('wrong distance', () => expect(checkQual(3400, 'F', 10, 100, 1, INV_QUALS)).toEqual([]));
   it('wrong stroke', () => expect(checkQual(3400, 'F', 10, 50, 2, INV_QUALS)).toEqual([]));
-  it('no time', () => expect(checkQual(null, 'F', 10, 50, 1, INV_QUALS)).toEqual([]));
+  it('no time (null)', () => expect(checkQual(null, 'F', 10, 50, 1, INV_QUALS)).toEqual([]));
+  it('no time (undefined)', () => expect(checkQual(undefined, 'F', 10, 50, 1, INV_QUALS)).toEqual([]));
+  it('zero is a valid time and qualifies if <= cut', () => expect(checkQual(0, 'F', 10, 50, 1, INV_QUALS)).toEqual(['INV']));
   it('empty quals', () => expect(checkQual(3400, 'F', 10, 50, 1, [])).toEqual([]));
 });
 
@@ -209,9 +212,9 @@ function mkDoneEvent(overrides) {
     eventId: 'e1', name: '50 Free', number: '1',
     schedIdx: 1000, heatNum: 1, laneNum: 3,
     offTime: 3421, seedTime: 3500,
-    place: 2, isDq: false, qualifying: [], status: 'done',
+    place: 2, isDq: false, isInvalid: false, qualifying: [], status: 'done',
     isRelay: false, relayTeam: null, legPosition: null, legStroke: null,
-    heatPlace: 1,
+    heatPlace: 1, distance: 50, strokeCode: 1,
     ...overrides,
   };
 }
@@ -254,6 +257,28 @@ describe('prevGroups', () => {
     const groups = prevGroups(swimmers);
     expect(groups[0].eventId).toBe('e2');
     expect(groups[1].eventId).toBe('e1');
+  });
+
+  it('group carries distance and strokeCode from events', () => {
+    const swimmers = [mkSwimmer('Alice', [mkDoneEvent({ distance: 25, strokeCode: 4 })])];
+    const g = prevGroups(swimmers)[0];
+    expect(g.distance).toBe(25);
+    expect(g.strokeCode).toBe(4);
+  });
+
+  it('entry isScratched true when offTime null and not DQ or invalid', () => {
+    const swimmers = [mkSwimmer('Alice', [mkDoneEvent({ offTime: null, isDq: false, isInvalid: false })])];
+    expect(prevGroups(swimmers)[0].entries[0].isScratched).toBe(true);
+  });
+
+  it('entry isScratched false when isDq', () => {
+    const swimmers = [mkSwimmer('Alice', [mkDoneEvent({ offTime: null, isDq: true })])];
+    expect(prevGroups(swimmers)[0].entries[0].isScratched).toBe(false);
+  });
+
+  it('entry isScratched false when isInvalid', () => {
+    const swimmers = [mkSwimmer('Alice', [mkDoneEvent({ offTime: null, isInvalid: true })])];
+    expect(prevGroups(swimmers)[0].entries[0].isScratched).toBe(false);
   });
 
   it('null place sorts to end', () => {

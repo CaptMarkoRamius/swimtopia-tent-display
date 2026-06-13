@@ -9,8 +9,8 @@ import {
   fetchTimeStandards, fetchFallbackStandards, fetchHeatTracker, fetchAthletes,
   fetchMeetWithEvents, fetchSwimEntries,
 } from './api.js';
-import { assembleSwimmers, assembleQuals } from './assembly.js';
-import { renderAll, renderTopBanner, renderLineupBanner, renderNextPanel, tick } from './render.js';
+import { assembleSwimmers, assembleQuals, buildEvDetails } from './assembly.js';
+import { renderAll, renderTopBanner, renderLineupBanner, renderNextPanel, tick, resetBannerState } from './render.js';
 import { loadDemoData, startDemoAnimation } from './demo.js';
 import { STROKE, STANDARD_AGE_GROUPS, esc, ageInRange, fmtTime } from './utils.js';
 import { unlockAudio } from './sounds.js';
@@ -127,8 +127,10 @@ export async function loadTeamsForMeet(meetId, meetName, meetDate, cardEl) {
     } catch { /* keep default */ }
 
     pillsEl.innerHTML = groups.map(({ minAge, maxAge }) => {
-      const label = minAge === 0 ? `${maxAge} & Under` : maxAge > 17 ? `${minAge} & Over` : `${minAge}-${maxAge}`;
-      const value = `${minAge}-${maxAge}`;
+      const lo = parseInt(minAge, 10), hi = parseInt(maxAge, 10);
+      if (isNaN(lo) || isNaN(hi)) return '';
+      const label = lo === 0 ? `${hi} & Under` : hi > 17 ? `${lo} & Over` : `${lo}-${hi}`;
+      const value = `${lo}-${hi}`;
       return `<label class="age-pill"><input type="checkbox" value="${value}"${saved.includes(value) ? ' checked' : ''}><span>${label}</span></label>`;
     }).join('');
     if (!pillsEl.querySelector('input:checked') && pillsEl.querySelector('input'))
@@ -170,11 +172,15 @@ export async function loadTeamsForMeet(meetId, meetName, meetDate, cardEl) {
 export async function selectMeet(meetId, meetName) {
   S.meetId     = meetId;
   S.meetDate   = $('go-btn').dataset.meetDate || null;
+  resetBannerState();
   S.nirvanaId        = null;
   S._staticNirvanaId = null;
   S._eventsRes       = null;
+  S._evDetails       = null;
   S._teamsRes        = null;
   S._stdRes          = null;
+  S._athletes        = {};
+  S._hasInProgress   = false;
   S.swimmers         = [];
   S.quals            = [];
   S.tracker          = null;
@@ -228,14 +234,22 @@ export async function refreshData() {
         : await fetchFallbackStandards(S.orgId, S.meetId, S.meetDate);
       S._staticNirvanaId = S.nirvanaId;
       S._eventsRes = eventsRes;
+      S._evDetails = buildEvDetails(eventsRes.data);
       S._teamsRes  = teamsRes;
       S._stdRes    = stdRes;
     }
 
-    const [heatsRes, trackerRes] = await Promise.all([
-      fetchNirvanaHeats(S.nirvanaId),
-      fetchHeatTracker(S.meetId),
-    ]);
+    // Fetch tracker first (single cheap request) to decide if heats need re-fetching.
+    const trackerRes = await fetchHeatTracker(S.meetId);
+    const newTracker = trackerRes.data?.[0]?.attributes ?? null;
+    const trackerChanged = !S.tracker ||
+      newTracker?.currentHeatNumber       !== S.tracker?.currentHeatNumber ||
+      newTracker?.currentEventNumberDigit !== S.tracker?.currentEventNumberDigit;
+
+    // Skip heats when tracker is stable and no heat was in-progress last poll.
+    if (!trackerChanged && !S._hasInProgress) return;
+
+    const heatsRes = await fetchNirvanaHeats(S.nirvanaId);
 
     const { _eventsRes: eventsRes, _teamsRes: teamsRes, _stdRes: stdRes } = S;
 
@@ -270,26 +284,29 @@ export async function refreshData() {
       }
     }
 
-    // Batch-fetch athletes in parallel (100 per request)
-    const ids = [...athleteIds];
-    const chunks = [];
-    for (let i = 0; i < ids.length; i += 100) chunks.push(ids.slice(i, i + 100));
-    const athleteResps = await Promise.all(chunks.map(chunk => fetchAthletes(S.nirvanaId, chunk)));
-    const athletes = {};
-    for (const resp of athleteResps)
-      for (const a of (resp.data || []))
-        athletes[a.id] = { ...a.attributes, _teamId: a.relationships?.nirvanaTeam?.data?.id ?? null };
+    // Only fetch athletes not already cached for this meet.
+    const newIds = [...athleteIds].filter(id => !S._athletes[id]);
+    if (newIds.length) {
+      const chunks = [];
+      for (let i = 0; i < newIds.length; i += 100) chunks.push(newIds.slice(i, i + 100));
+      const resps = await Promise.all(chunks.map(chunk => fetchAthletes(S.nirvanaId, chunk)));
+      for (const resp of resps)
+        for (const a of (resp.data || []))
+          S._athletes[a.id] = { ...a.attributes, _teamId: a.relationships?.nirvanaTeam?.data?.id ?? null };
+    }
 
     const { assembled, quals } = assembleSwimmers(
       heatsRes.data, rawEntries, rawResults, relayLegMap,
-      athletes, eventsRes.data, stdRes.included || [],
-      targetTeamId, S.ageGroups, S.gender
+      S._athletes, eventsRes.data, stdRes.included || [],
+      targetTeamId, S.ageGroups, S.gender,
+      S._evDetails
     );
 
-    S.swimmers  = assembled;
-    S.quals     = quals;
-    S.tracker   = trackerRes.data?.[0]?.attributes ?? null;
-    S.updatedAt = Date.now();
+    S.swimmers       = assembled;
+    S.quals          = quals;
+    S.tracker        = newTracker;
+    S._hasInProgress = heatsRes.data.some(h => h.attributes?.status === 'inProgress');
+    S.updatedAt      = Date.now();
 
     renderAll();
     startTicking();
