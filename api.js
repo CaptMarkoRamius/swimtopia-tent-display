@@ -92,6 +92,29 @@ export const fetchTimeStandards   = meetId    =>
   api(`swim-meets/${meetId}/time-standard-sets`, {
     include: 'time_standards,time_standard_events,time_standard_events.time_standard_cuts',
   }).catch(() => ({ included: [] }));
+
+// Falls back to the most recent meet whose name contains "invitational" (case-insensitive)
+// if the current meet has no time standards configured.
+export async function fetchFallbackStandards(orgId, excludeMeetId) {
+  const cal = await api(`organizations/${orgId}/calendar-events`, { 'page[size]': 100 })
+    .catch(() => ({ data: [] }));
+  const candidates = (cal.data || [])
+    .filter(e =>
+      e.attributes?.stiType === 'SwimMeet' &&
+      e.id !== String(excludeMeetId) &&
+      /invitational/i.test(e.attributes?.name ?? '')
+    )
+    .sort((a, b) => {
+      const da = new Date(a.attributes?.startDate || a.attributes?.startsAt || 0);
+      const db = new Date(b.attributes?.startDate || b.attributes?.startsAt || 0);
+      return db - da;
+    });
+  for (const meet of candidates) {
+    const std = await fetchTimeStandards(meet.id);
+    if ((std.included || []).length) return std;
+  }
+  return { included: [] };
+}
 export const fetchHeatTracker     = meetId    =>
   api(`swim-meets/${meetId}/swim-event-heat-trackers`);
 export const fetchAthletes        = (nirvanaId, ids) => {

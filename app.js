@@ -6,7 +6,7 @@ import {
   api, paginate, login, onSessionExpired,
   fetchOrg, fetchCalendarEvents, fetchMeetDetails,
   fetchNirvanaTeams, fetchNirvanaEvents, fetchNirvanaHeats,
-  fetchTimeStandards, fetchHeatTracker, fetchAthletes,
+  fetchTimeStandards, fetchFallbackStandards, fetchHeatTracker, fetchAthletes,
   fetchMeetWithEvents, fetchSwimEntries,
 } from './api.js';
 import { assembleSwimmers, assembleQuals } from './assembly.js';
@@ -209,11 +209,14 @@ export async function refreshData() {
 
     // Static data (events, teams, standards) only changes between meets — cache it.
     if (S._staticNirvanaId !== S.nirvanaId) {
-      const [eventsRes, teamsRes, stdRes] = await Promise.all([
+      const [eventsRes, teamsRes, stdRes0] = await Promise.all([
         fetchNirvanaEvents(S.nirvanaId),
         fetchNirvanaTeams(S.nirvanaId),
         fetchTimeStandards(S.meetId),
       ]);
+      const stdRes = (stdRes0.included || []).length
+        ? stdRes0
+        : await fetchFallbackStandards(S.orgId, S.meetId);
       S._staticNirvanaId = S.nirvanaId;
       S._eventsRes = eventsRes;
       S._teamsRes  = teamsRes;
