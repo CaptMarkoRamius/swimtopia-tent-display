@@ -119,8 +119,10 @@ export async function fetchFallbackStandards(orgId, excludeMeetId, meetDate) {
   }
   return { included: [] };
 }
-export const fetchHeatTracker     = meetId    =>
-  api(`swim-meets/${meetId}/swim-event-heat-trackers`);
+export const fetchHeatTracker = (meetId, nirvanaId) =>
+  nirvanaId
+    ? api(`nirvana-meets/${nirvanaId}/nirvana-event-heat-trackers`)
+    : api(`swim-meets/${meetId}/swim-event-heat-trackers`);
 export const fetchAthletes        = (nirvanaId, ids) => {
   const params = {};
   ids.forEach((id, j) => { params[`filter[id][${j}]`] = id; });

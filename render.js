@@ -33,14 +33,22 @@ export function renderTopBanner() {
   $('bt-clock').textContent = fmtClock(new Date());
 
   if (t?.isLive) {
-    const stroke = STROKE[t.currentEventStrokeCode] ?? '';
-    const gender = t.currentEventGender === 'F' ? 'Girls' : t.currentEventGender === 'M' ? 'Boys' : '';
-    const agePart = (t.currentEventMinAge != null && t.currentEventMaxAge != null)
-      ? `${t.currentEventMinAge}-${t.currentEventMaxAge}` : '';
+    // Nirvana tracker omits event detail fields — look them up by event number from cached evDetails.
+    const evd = t.currentEventNumberDigit && S._evDetails
+      ? Object.values(S._evDetails).find(e => String(e.number) === String(t.currentEventNumberDigit)) ?? null
+      : null;
+    const dist   = t.currentEventDistance   ?? evd?.distance   ?? null;
+    const scode  = t.currentEventStrokeCode ?? evd?.strokeCode ?? null;
+    const gcode  = t.currentEventGender     ?? evd?.gender     ?? null;
+    const minAge = t.currentEventMinAge     ?? evd?.minAge     ?? null;
+    const maxAge = t.currentEventMaxAge     ?? evd?.maxAge     ?? null;
+    const stroke = STROKE[scode] ?? '';
+    const gender = gcode === 'F' ? 'Girls' : gcode === 'M' ? 'Boys' : '';
+    const agePart = (minAge != null && maxAge != null) ? `${minAge}-${maxAge}` : '';
     const parts = [
       t.currentEventNumberDigit ? `Event ${t.currentEventNumberDigit}` : null,
       t.currentHeatNumber ? `Heat ${t.currentHeatNumber}` : null,
-      t.currentEventDistance ? `${t.currentEventDistance} ${stroke}`.trim() : null,
+      dist ? `${dist} ${stroke}`.trim() : null,
       (agePart || gender) ? `${agePart} ${gender}`.trim() : null,
     ].filter(Boolean);
     $('bt-tag').textContent   = 'NOW IN POOL';
@@ -66,9 +74,10 @@ export function renderLineupBanner(now, prebuiltGroups = null) {
   const candidates = (prebuiltGroups ?? upcomingGroups()).filter(g => g.entries.some(e => e.status === 'upcoming'));
 
   // Only show events within the warn/lineup window (ephemeral — hide banner otherwise)
+  // warnMin and lineupMin are both measured from etaEpoch, not compounded.
   const qualifying = candidates.filter(g => {
     if (!g.etaEpoch) return false;
-    return (lineupEpoch(g.etaEpoch) - now) <= S.warnMin * 60;
+    return (g.etaEpoch - now) <= S.warnMin * 60;
   });
 
   const container = $('banner-lineup');
@@ -257,7 +266,8 @@ export function renderNextPanel(now, prebuiltGroups = null) {
     const secsToLineup = lineupAt ? lineupAt - now : null;
     const isActive     = g.entries.some(e => e.status === 'inProgress');
     const isLineup     = secsToLineup !== null && secsToLineup <= 0;
-    const isWarning    = !isLineup && secsToLineup !== null && secsToLineup <= S.warnMin * 60;
+    const secsToEvent  = g.etaEpoch ? g.etaEpoch - now : null;
+    const isWarning    = !isLineup && secsToEvent !== null && secsToEvent <= S.warnMin * 60;
 
     const cardCls = ['next-event-card',
       isActive ? 'is-active' : isLineup ? 'is-lineup' : isWarning ? 'is-warning' : '',

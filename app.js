@@ -181,6 +181,7 @@ export async function selectMeet(meetId, meetName) {
   S._stdRes          = null;
   S._athletes        = {};
   S._hasInProgress   = false;
+  S._lastHeatsFetch  = 0;
   S.swimmers         = [];
   S.quals            = [];
   S.tracker          = null;
@@ -240,16 +241,19 @@ export async function refreshData() {
     }
 
     // Fetch tracker first (single cheap request) to decide if heats need re-fetching.
-    const trackerRes = await fetchHeatTracker(S.meetId);
+    const trackerRes = await fetchHeatTracker(S.meetId, S.nirvanaId);
     const newTracker = trackerRes.data?.[0]?.attributes ?? null;
     const trackerChanged = !S.tracker ||
       newTracker?.currentHeatNumber       !== S.tracker?.currentHeatNumber ||
       newTracker?.currentEventNumberDigit !== S.tracker?.currentEventNumberDigit;
 
-    // Skip heats when tracker is stable and no heat was in-progress last poll.
-    if (!trackerChanged && !S._hasInProgress) return;
+    // Skip heats when tracker is stable, no heat was in-progress, and ETAs are fresh.
+    // Force re-fetch every 5 minutes so adjustedEstimatedStartAt updates come through.
+    const heatsStale = Date.now() - S._lastHeatsFetch > 5 * 60 * 1000;
+    if (!trackerChanged && !S._hasInProgress && !heatsStale) return;
 
     const heatsRes = await fetchNirvanaHeats(S.nirvanaId);
+    S._lastHeatsFetch = Date.now();
 
     const { _eventsRes: eventsRes, _teamsRes: teamsRes, _stdRes: stdRes } = S;
 

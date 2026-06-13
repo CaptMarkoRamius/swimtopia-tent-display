@@ -132,12 +132,14 @@ GET /nirvana-meets/{id}/nirvana-teams
 GET /nirvana-meets/{id}/nirvana-events
   attributes: eventNumber, distance, strokeCode, minAge, maxAge, gender, eventType
 
-GET /swim-meets/{id}/swim-event-heat-trackers
+GET /nirvana-meets/{id}/nirvana-event-heat-trackers   ← USE THIS (confirmed from HAR)
   LIVE SCOREBOARD — what's happening in the pool RIGHT NOW
-  attributes: isLive, isComplete, currentEventNumberDigit, currentHeatNumber,
-              currentEventDistance, currentEventStrokeCode,
-              currentEventGender, currentEventMinAge, currentEventMaxAge
+  attributes: isLive, isComplete, currentEventNumberDigit, currentHeatNumber
+  NOTE: does NOT include distance/stroke/gender/age — look those up from nirvana-events by number
   Poll every 30s
+
+GET /swim-meets/{id}/swim-event-heat-trackers   ← wrong endpoint, always returns isLive=false
+  (kept here for reference — do not use)
 
 GET /swim-meets/{id}/time-standard-sets
   ?include=time_standards,time_standard_events,time_standard_events.time_standard_cuts
