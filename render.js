@@ -73,10 +73,13 @@ export function renderLineupBanner(now, prebuiltGroups = null) {
   // Exclude events where all entries are already in the water — advance past them
   const candidates = (prebuiltGroups ?? upcomingGroups()).filter(g => g.entries.some(e => e.status === 'upcoming'));
 
-  // Only show events within the warn/lineup window (ephemeral — hide banner otherwise)
+  // Only show events within the warn/lineup window (ephemeral — hide banner otherwise).
+  // Suppress events the tracker says are already happening — they're in the pool, not lining up.
   // warnMin and lineupMin are both measured from etaEpoch, not compounded.
+  const currentEvNum = S.tracker?.currentEventNumberDigit;
   const qualifying = candidates.filter(g => {
     if (!g.etaEpoch) return false;
+    if (currentEvNum && String(g.number) === String(currentEvNum)) return false;
     return (g.etaEpoch - now) <= S.warnMin * 60;
   });
 
@@ -250,8 +253,9 @@ function _renderIndividualResults(entries) {
 // ── Upcoming events panel ────────────────────────────────────────────────────
 
 export function renderNextPanel(now, prebuiltGroups = null) {
-  const panel  = $('panel-next');
-  const groups = prebuiltGroups ?? upcomingGroups();
+  const panel        = $('panel-next');
+  const groups       = prebuiltGroups ?? upcomingGroups();
+  const currentEvNum = S.tracker?.currentEventNumberDigit;
 
   if (!groups.length) {
     panel.innerHTML = S.swimmers.length
@@ -264,10 +268,11 @@ export function renderNextPanel(now, prebuiltGroups = null) {
   for (const g of groups) {
     const lineupAt     = g.etaEpoch ? lineupEpoch(g.etaEpoch) : null;
     const secsToLineup = lineupAt ? lineupAt - now : null;
-    const isActive     = g.entries.some(e => e.status === 'inProgress');
-    const isLineup     = secsToLineup !== null && secsToLineup <= 0;
+    const isActive     = g.entries.some(e => e.status === 'inProgress')
+                      || (S.tracker?.isLive && currentEvNum && String(g.number) === String(currentEvNum));
+    const isLineup     = !isActive && secsToLineup !== null && secsToLineup <= 0;
     const secsToEvent  = g.etaEpoch ? g.etaEpoch - now : null;
-    const isWarning    = !isLineup && secsToEvent !== null && secsToEvent <= S.warnMin * 60;
+    const isWarning    = !isActive && !isLineup && secsToEvent !== null && secsToEvent <= S.warnMin * 60;
 
     const cardCls = ['next-event-card',
       isActive ? 'is-active' : isLineup ? 'is-lineup' : isWarning ? 'is-warning' : '',
